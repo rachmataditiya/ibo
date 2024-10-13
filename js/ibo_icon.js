@@ -25,10 +25,10 @@ class IBO_ICON {
         this.font_color = "#ffffff";
         this.font_family = "Font Awesome 5 Free";
         this.font_weight = "900";
-        this.icon_background = "#9b4dca";
+        this.icon_background = "transparent"; // Set background to transparent for Odoo 17 and 18
         this.icon_class = "fas fa-address-card";
         this.icon_width = "300";
-        this.odoo_version = "13.0";
+        this.odoo_version = "17.0";  // Modify this to version 17 or 18 based on your needs
 
         // overwrite default parameter
         if (settings != null) {
@@ -64,17 +64,11 @@ class IBO_ICON {
 
     _draw(element) {
         this._setUp();
-        this._setBackground();
-        this._setHardShadow();
-        this._setTextWithShadow();
-        this._setInlineShadow();
-        this._setGradient();
+        this._setBackground();  // Background is transparent
+        this._setTextOnly();    // No shadows for Odoo 17 and 18
         document.getElementById(element).appendChild(this.canvas);
     }
 
-    /**
-     * Set up canvas and get context
-     */
     _setUp() {
         this.canvas = document.createElement("canvas");
         this.canvas.setAttribute("class", "ibo-icon-canvas");
@@ -85,39 +79,52 @@ class IBO_ICON {
         this._ctx.font = `${this.font_weight} ${this.font_size}px "${this.font_family}"`;
     }
 
-    /**
-     * Draw background color
-     */
     _setBackground() {
-        let radius = this.icon_width * 0.047
+        // Transparent background for Odoo 17 and 18
+        if (this.odoo_version === "17.0" || this.odoo_version === "18.0") {
+            this._ctx.fillStyle = "transparent";
+        } else {
+            let radius = this.icon_width * 0.047;
 
-        this._ctx.beginPath();
+            this._ctx.beginPath();
 
-        switch (this.odoo_version) {
-            case "11.0":
-                this._ctx.rect(0, 0, this.icon_width, this.icon_width);
-                break;
-            case "12.0":
-            case "13.0":
-            case "14.0":
-            case "15.0":
-                this._ctx.moveTo(radius, 0);
-                this._ctx.lineTo(this.icon_width - radius, 0);
-                this._ctx.arcTo(this.icon_width, 0, this.icon_width, radius, radius);
-                this._ctx.lineTo(this.icon_width, this.icon_width - radius);
-                this._ctx.arcTo(this.icon_width, this.icon_width, this.icon_width - radius, this.icon_width, radius);
-                this._ctx.lineTo(radius, this.icon_width);
-                this._ctx.arcTo(0, this.icon_width, 0, this.icon_width - radius, radius);
-                this._ctx.lineTo(0, radius);
-                this._ctx.arcTo(0, 0, this.icon_width - radius, 0, radius);
-                break;
-            default:
-                console.log("Not supported version selected.");
-                break;
+            switch (this.odoo_version) {
+                case "11.0":
+                    this._ctx.rect(0, 0, this.icon_width, this.icon_width);
+                    break;
+                case "12.0":
+                case "13.0":
+                case "14.0":
+                case "15.0":
+                case "16.0":
+                    this._ctx.moveTo(radius, 0);
+                    this._ctx.lineTo(this.icon_width - radius, 0);
+                    this._ctx.arcTo(this.icon_width, 0, this.icon_width, radius, radius);
+                    this._ctx.lineTo(this.icon_width, this.icon_width - radius);
+                    this._ctx.arcTo(this.icon_width, this.icon_width, this.icon_width - radius, this.icon_width, radius);
+                    this._ctx.lineTo(radius, this.icon_width);
+                    this._ctx.arcTo(0, this.icon_width, 0, this.icon_width - radius, radius);
+                    this._ctx.lineTo(0, radius);
+                    this._ctx.arcTo(0, 0, this.icon_width - radius, 0, radius);
+                    break;
+                default:
+                    console.log("Not supported version selected.");
+                    break;
+            }
+            this._ctx.clip();
+            this._ctx.fillStyle = this.icon_background;
+            this._ctx.fill();
         }
-        this._ctx.clip();
-        this._ctx.fillStyle = this.icon_background;
-        this._ctx.fill();
+    }
+
+    _setTextOnly() {
+        this._ctx.save();
+        this._ctx.fillStyle = this.font_color;
+        this._ctx.font = `${this.font_weight} ${this.font_size}px "${this.font_family}"`;
+        this._ctx.textAlign = "center";
+        this._ctx.textBaseline = "middle";
+        this._ctx.fillText(`${this.icon_text}`, this.icon_width / 2, this.icon_width / 2);
+        this._ctx.restore();
     }
 
     /**
@@ -385,19 +392,16 @@ class IBO_ICON {
      * Helper function to extract the corresponding symbol based on a given class.
      * @param {*} clazzName - The CSS class from which the symbol should be extracted.
      */
-    _getUnicodeAndFontWeight(clazzName) {
+     _getUnicodeAndFontWeight(clazzName) {
         let tempI = document.createElement('i');
 
         tempI.className = clazzName;
         document.body.appendChild(tempI);
 
-        //let char = window.getComputedStyle(document.querySelector('.' + clazzName), ':before').getPropertyValue('content').replace(/'|"/g, '');
         let char = window.getComputedStyle(tempI, ':before').content.replace(/'|"/g, '');
-        let font_weight = window.getComputedStyle(tempI).getPropertyValue( "font-weight" );
+        let font_weight = window.getComputedStyle(tempI).getPropertyValue("font-weight");
         tempI.remove();
 
-        // Logging for debug purposes
-        // console.log("Unicode: " + char + " # Font-Weight: " + font_weight);
         return [char, font_weight];
     }
 }
